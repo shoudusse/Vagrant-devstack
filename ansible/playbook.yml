@@ -1,16 +1,13 @@
 ---
 - hosts: devstack
-  sudo: true
+  become: true
 
   tasks:
-    - name: Set local
-      lineinfile: dest=/etc/default/locale regexp=^LC_ALL= line=LC_ALL="en_US.UTF-8"
+    - name: Do not accept ssh client locales
+      lineinfile: dest=/etc/ssh/sshd_config regexp="^AcceptEnv LANG LC_*" line="# ^AcceptEnv LANG LC_*"
 
     - name: Install git
-      apt: name=git update_cache=yes
-
-    - name: Install libsqlite3-dev
-      apt: name=libsqlite3-dev update_cache=yes
+      apt: name=git update_cache=yes cache_valid_time=3600
 
     - name: Clone devstack
       git:
@@ -26,8 +23,8 @@
     - name: Clone devstack
       command: su - stack -c 'git clone https://git.openstack.org/openstack-dev/devstack /opt/stack/devstack'
 
-    - name: poser fichier local.conf
+    - name: Set local.conf
       copy: src=files/local.conf dest=/opt/stack/devstack/local.conf owner=stack group=stack mode=0644
 
-    - name: lancer la stack
+    - name: Launch the stack
       command: su - stack -c 'cd devstack && ./stack.sh'
