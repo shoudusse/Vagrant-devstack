@@ -1,0 +1,33 @@
+---
+- hosts: devstack
+  sudo: true
+
+  tasks:
+    - name: Set local
+      lineinfile: dest=/etc/default/locale regexp=^LC_ALL= line=LC_ALL="en_US.UTF-8"
+
+    - name: Install git
+      apt: name=git update_cache=yes
+
+    - name: Install libsqlite3-dev
+      apt: name=libsqlite3-dev update_cache=yes
+
+    - name: Clone devstack
+      git:
+        repo: https://git.openstack.org/openstack-dev/devstack
+        dest: /opt/devstack
+
+    - name: Create stack user
+      command: /opt/devstack/tools/create-stack-user.sh
+
+    - name: Delete previous clone
+      file: path=/opt/stack/devstack state=absent
+
+    - name: Clone devstack
+      command: su - stack -c 'git clone https://git.openstack.org/openstack-dev/devstack /opt/stack/devstack'
+
+    - name: poser fichier local.conf
+      copy: src=files/local.conf dest=/opt/stack/devstack/local.conf owner=stack group=stack mode=0644
+
+    - name: lancer la stack
+      command: su - stack -c 'cd devstack && ./stack.sh'
